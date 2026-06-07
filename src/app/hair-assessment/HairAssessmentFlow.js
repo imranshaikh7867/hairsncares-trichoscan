@@ -1793,7 +1793,7 @@ const GeneratingReportModal = ({ isOpen, statusText }) => {
 const ResultsView = ({ sessionId, userProfile = {} }) => {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { isAuthenticated, firebaseUser, getIdToken, startPhoneAuth, confirmPhoneOtp } = useAuth();
+  const { isAuthenticated, firebaseUser, getIdToken, startPhoneAuth, confirmPhoneOtp, logout } = useAuth();
   const confirmationRef = React.useRef(null);
   const navigate = (to, options = {}) => {
     if (typeof to === 'number') {
@@ -1919,13 +1919,17 @@ const ResultsView = ({ sessionId, userProfile = {} }) => {
       setIsCreatingLead(true);
 
       // Already signed in → no OTP, straight to unlock.
-      if (isAuthenticated) {
+      const e164 = `+91${userInfo.phone.trim()}`;
+
+      if (isAuthenticated && firebaseUser?.phoneNumber === e164) {
         await proceedAfterAuth();
         return;
       }
 
-      // New / signed-out → send Firebase phone OTP.
-      const e164 = `+91${userInfo.phone.trim()}`;
+      if (isAuthenticated && firebaseUser?.phoneNumber !== e164) {
+        try { await logout(); } catch (_) {}
+      }
+
       confirmationRef.current = await startPhoneAuth(e164);
       setOtpError('');
       setIsOtpOpen(true);
