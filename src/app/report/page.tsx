@@ -577,16 +577,27 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
   };
 
   const handleAddRecommendedKit = async () => {
-    if (recommendedKitItems.length === 0) {
-      toast.error("No purchasable products available in this recommendation yet.");
+    console.log("[kit] clicked. recommendationRows:", recommendationRows);
+    console.log("[kit] recommendedKitItems:", recommendedKitItems);
+    console.log("[kit] addItems is:", typeof addItems);
+
+    if (!recommendedKitItems || recommendedKitItems.length === 0) {
+      console.warn("[kit] no purchasable items — rows missing productId/variantId/unitPrice");
+      try { toast.error("No purchasable products available yet."); }
+      catch (e) { console.error("[kit] toast failed:", e); alert("No purchasable products available yet."); }
       return;
     }
+
     try {
-      await addItems(recommendedKitItems);
+      console.log("[kit] calling addItems with", recommendedKitItems.length, "items");
+      const result = await addItems(recommendedKitItems);
+      console.log("[kit] addItems result:", result);
       await refreshCart();
-      toast.success("Recommended kit added to cart. Nutrition insights unlocked.");
+      try { toast.success("Recommended kit added to cart."); } catch (_) { alert("Added to cart."); }
     } catch (e) {
-      toast.error("Could not add the kit to cart. Please try again.");
+      console.error("[kit] addItems threw:", e);
+      try { toast.error("Could not add the kit: " + (e?.message || "unknown")); }
+      catch (_) { alert("Could not add the kit: " + (e?.message || "unknown")); }
     }
   };
 
