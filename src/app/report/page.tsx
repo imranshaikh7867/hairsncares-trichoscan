@@ -290,6 +290,7 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
     false
   );
   const [reportData, setReportData] = React.useState(initialResolved);
+  const { kitAdded, addItems, adding, cart, refreshCart } = useCart();
   const [loading, setLoading] = React.useState(!initialData);
   const [resolvedSessionId, setResolvedSessionId] = React.useState(sessionId || "");
   const [fullReport, setFullReport] = React.useState(
@@ -574,6 +575,20 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
     }
   };
 
+  const handleAddRecommendedKit = async () => {
+    if (recommendedKitItems.length === 0) {
+      toast.error("No purchasable products available in this recommendation yet.");
+      return;
+    }
+    try {
+      await addItems(recommendedKitItems);
+      await refreshCart();
+      toast.success("Recommended kit added to cart. Nutrition insights unlocked.");
+    } catch (e) {
+      toast.error("Could not add the kit to cart. Please try again.");
+    }
+  };
+
 
   // DYNAMIC DATA from API
   // Merge dseResult (raw scoring) + clinicalClassification (UI metadata) so that
@@ -839,9 +854,42 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
       price: asDisplayText(r?.price, "Contact Clinic"),
       thumbClass: validThumbClasses.includes(thumbClassRaw) ? thumbClassRaw : "thumb-1",
       image: asDisplayText(r?.image, ""),
+      productId: r?.productId || null,
+      productModel: r?.productModel || "GeneralProduct",
+      variantId: r?.variantId || null,
+      variantLabel: asDisplayText(r?.variantLabel, ""),
+      variantSku: asDisplayText(r?.variantSku, ""),
+      unitPrice: Number(r?.unitPrice) || 0,
+      mrp: Number(r?.mrp) || 0,
       fromApi: true,
     };
   });
+
+  const recommendedKitItems = recommendationRows
+    .filter((r) => r.productId && r.variantId && Number(r.unitPrice) > 0)
+    .map((r) => ({
+      productId: r.productId,
+      productModel: r.productModel || "GeneralProduct",
+      variantId: r.variantId,
+      qty: 1,
+      unitPrice: Number(r.unitPrice),
+      mrp: Number(r.mrp) || 0,
+      variantLabel: r.variantLabel || "",
+      variantSku: r.variantSku || "",
+    }));
+
+  const kitInCart =
+    Array.isArray(cart?.items) &&
+    recommendedKitItems.length > 0 &&
+    recommendedKitItems.every((ki) =>
+      cart.items.some(
+        (ci) =>
+          String(ci.productId?._id || ci.productId) === String(ki.productId) &&
+          String(ci.variantId) === String(ki.variantId)
+      )
+    );
+
+  const nutritionUnlocked = kitAdded || kitInCart;
 
   const healthIndicatorsRaw = resolveItems(
     lockedNarrative?.healthIndicators?.dashboard,
@@ -1009,7 +1057,7 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
     };
   });
 
-  const nutritionalProtocolSource = fullReport
+  const nutritionalProtocolSource = nutritionUnlocked
     ? resolveItems(resolvedReport?.nutritionalProtocolCards, lockedNarrative?.nutritionalProtocolCards)
     : safeArray(staticNarrative?.nutritionalPlan);
   const nutritionalProtocolCards = nutritionalProtocolSource.map(n => ({
@@ -1160,7 +1208,7 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
     return { tone: "cyan", icon: "leaf" };
   };
 
-  const dailyMealPlanSource = fullReport
+  const dailyMealPlanSource = nutritionUnlocked
     ? resolveItems(resolvedReport?.dailyMealPlanRows, lockedNarrative?.dailyMealPlanRows, lockedNarrative?.dailyMealPlan)
     : safeArray(staticNarrative?.dailyMealPlan);
   const dailyMealPlanRows = dailyMealPlanSource.map(m => {
@@ -1236,7 +1284,7 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
         fromApi: true,
       }));
 
-  const foodsToAvoidSource = useStatic
+  const foodsToAvoidSource = !nutritionUnlocked
     ? safeArray(staticNarrative?.toAvoid)
     : resolveItems(lockedNarrative?.foodsHabitsToAvoid, resolvedReport?.foodsHabitsToAvoid);
   const foodsHabitsToAvoid = foodsToAvoidSource.map(f => ({
@@ -3720,7 +3768,7 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
                 </div>
 
 
-                {fullReport ? (
+                {nutritionUnlocked ? (
                   <div className="nutritional-card-grid">
                     {nutritionalProtocolCards.map((item) => (
                       <article className="nutritional-card" key={item.title}>
@@ -3813,7 +3861,7 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
                       title="Unlock Complete Nutrient Plan"
                       description="Get exact dosage, absorption strategy, and personalized recommendations."
                       ctaText="Unlock Full Nutrition Plan"
-                      onUnlock={handleUnlockReport}
+                      onUnlock={handleAddRecommendedKit}
                     />
                   </div>
                 )}
@@ -3844,7 +3892,7 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
                   Sample Daily Meal Plan
                 </h4>
 
-                {fullReport ? (
+                {nutritionUnlocked ? (
                   <div className="meal-plan-list">
                     {dailyMealPlanRows.map((item) => (
                       <article className="meal-plan-row" key={item.meal}>
@@ -3875,7 +3923,7 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
                       title="Unlock Personalized Meal Plan"
                       description="Get a day-by-day diet plan tailored to your hair recovery needs."
                       ctaText="Unlock Full Plan"
-                      onUnlock={handleUnlockReport}
+                      onUnlock={handleAddRecommendedKit}
                     />
                   </div>
                 )}
@@ -3906,7 +3954,7 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
                   Foods &amp; Habits to Avoid
                 </h4>
 
-                {fullReport ? (
+                {nutritionUnlocked ? (
                   <div className="avoid-habits-grid">
                     {foodsHabitsToAvoid.map((item) => (
                       <article className={`avoid-habit-card avoid-habit-card-${item.tone || 'danger'}`} key={item.title}>
@@ -3937,7 +3985,7 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
                       title="Unlock Avoidance Guide"
                       description="Detailed breakdown of hidden dietary triggers and habits slowing your recovery."
                       ctaText="Unlock Full Plan"
-                      onUnlock={handleUnlockReport}
+                      onUnlock={handleAddRecommendedKit}
                     />
                   </div>
                 )}
@@ -5639,7 +5687,8 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
                     </span>
                   </div>
 
-                  <button type="button" className="freebies-cta-btn">
+                  <button type="button" className="freebies-cta-btn" onClick={handleAddRecommendedKit}
+                    disabled={adding}>
                     <svg
                       width="13"
                       height="12"
@@ -5652,7 +5701,7 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
                         fill="#020617"
                       />
                     </svg>
-                    Proceed with Recommended Kit
+                    {adding ? 'Adding…' : 'Proceed with the Recommended Kit'}
                   </button>
                 </article>
               )}

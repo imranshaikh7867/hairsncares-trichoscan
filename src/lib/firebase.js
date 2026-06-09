@@ -37,17 +37,12 @@ export function getRecaptchaVerifier(containerId = 'recaptcha-container') {
 }
 
 export async function sendPhoneOtp(e164Phone) {
-  const verifier = getRecaptchaVerifier();
-  // Force the widget to render before requesting the code.
-  await verifier.render();
-  try {
-    return await signInWithPhoneNumber(auth, e164Phone, verifier);
-  } catch (err) {
-    // On failure, destroy the verifier so the retry uses a clean one.
-    if (window._recaptchaVerifier) {
-      window._recaptchaVerifier.clear();
-      window._recaptchaVerifier = null;
-    }
-    throw err;
+  // Always destroy any previous verifier so initial-send AND resend get a clean one.
+  if (typeof window !== 'undefined' && window._recaptchaVerifier) {
+    try { window._recaptchaVerifier.clear(); } catch (_) {}
+    window._recaptchaVerifier = null;
   }
+  const verifier = getRecaptchaVerifier();
+  await verifier.render();
+  return signInWithPhoneNumber(auth, e164Phone, verifier);
 }

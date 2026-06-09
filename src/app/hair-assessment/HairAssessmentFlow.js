@@ -1607,7 +1607,7 @@ const ProcessingView = ({ sessionId, onBack, onComplete }) => {
   );
 };
 
-const OtpModal = ({ isOpen, onClose, onVerify, phone, isVerifying = false, otpLength = 4, errorMessage = '', onClearError }) => {
+const OtpModal = ({ isOpen, onClose, onVerify, onResend, phone, isVerifying = false, otpLength = 4, errorMessage = '', onClearError }) => {
   const [otp, setOtp] = React.useState(Array(otpLength).fill(''));
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
@@ -1628,7 +1628,7 @@ const OtpModal = ({ isOpen, onClose, onVerify, phone, isVerifying = false, otpLe
 
   const handleResend = () => {
     if (!canResend) return;
-    // Logic to trigger backend resend would go here
+    if (typeof onResend === 'function') onResend();   // re-trigger Firebase OTP
     if (typeof onClearError === 'function') onClearError();
     setTimer(60);
     setCanResend(false);
@@ -1691,7 +1691,7 @@ const OtpModal = ({ isOpen, onClose, onVerify, phone, isVerifying = false, otpLe
         </div>
 
         <div className="otp-body">
-          <p className="otp-instruct">Enter the 4-digit code sent to +91 {phone || '1234567890'}</p>
+          <p className="otp-instruct">Enter the {otpLength}-digit code sent to +91 {phone || '1234567890'}</p>
           <div className="otp-inputs-row">
             {otp.map((data, index) => (
               <input
@@ -1939,6 +1939,19 @@ const ResultsView = ({ sessionId, userProfile = {} }) => {
       toast.error('Could not start verification. Please try again.');
     } finally {
       setIsCreatingLead(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (!userInfo.phone.trim()) return;
+    try {
+      const e164 = `+91${userInfo.phone.trim()}`;
+      confirmationRef.current = await startPhoneAuth(e164);
+      setOtpError('');
+      toast.info('OTP resent to your phone.');
+    } catch (err) {
+      console.error('Resend failed:', err);
+      setOtpError('Could not resend OTP. Please try again.');
     }
   };
 
@@ -2260,6 +2273,7 @@ const ResultsView = ({ sessionId, userProfile = {} }) => {
           isOpen={isOtpOpen}
           onClose={() => { setIsOtpOpen(false); setOtpError(''); }}
           onVerify={handleOtpVerify}
+          onResend={handleResendOtp}
           phone={userInfo.phone}
           otpLength={6}
           isVerifying={isVerifyingOtp}
