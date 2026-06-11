@@ -12,7 +12,8 @@ import {
   selectReportDataLoading,
 } from '@/redux/slices/reportSlice';
 import { toast } from 'react-toastify';
-import { useCart } from "@/context/CartContext";
+import TrichoCheckoutModal from "@/app/hair-assessment/_components/TrichoCheckoutModal";
+import { getMyOrders } from "@/app/hair-assessment/orderApi";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -291,7 +292,9 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
     false
   );
   const [reportData, setReportData] = React.useState(initialResolved);
-  const { kitAdded, addItems, adding, cart, refreshCart } = useCart();
+  const [checkoutOpen, setCheckoutOpen] = React.useState(false);
+  const [kitOrdered, setKitOrdered] = React.useState(false);
+  const adding = false;
   const [loading, setLoading] = React.useState(!initialData);
   const [resolvedSessionId, setResolvedSessionId] = React.useState(sessionId || "");
   const [fullReport, setFullReport] = React.useState(
@@ -576,29 +579,18 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
     }
   };
 
-  const handleAddRecommendedKit = async () => {
-    console.log("[kit] clicked. recommendationRows:", recommendationRows);
-    console.log("[kit] recommendedKitItems:", recommendedKitItems);
-    console.log("[kit] addItems is:", typeof addItems);
-
+  const handleAddRecommendedKit = () => {
     if (!recommendedKitItems || recommendedKitItems.length === 0) {
-      console.warn("[kit] no purchasable items — rows missing productId/variantId/unitPrice");
-      try { toast.error("No purchasable products available yet."); }
-      catch (e) { console.error("[kit] toast failed:", e); alert("No purchasable products available yet."); }
+      toast.error("No purchasable products available yet.");
       return;
     }
+    setCheckoutOpen(true);
+  };
 
-    try {
-      console.log("[kit] calling addItems with", recommendedKitItems.length, "items");
-      const result = await addItems(recommendedKitItems);
-      console.log("[kit] addItems result:", result);
-      await refreshCart();
-      try { toast.success("Recommended kit added to cart."); } catch (_) { alert("Added to cart."); }
-    } catch (e) {
-      console.error("[kit] addItems threw:", e);
-      try { toast.error("Could not add the kit: " + (e?.message || "unknown")); }
-      catch (_) { alert("Could not add the kit: " + (e?.message || "unknown")); }
-    }
+  // Called by the checkout modal once an order is successfully booked (COD path).
+  const handleKitOrdered = () => {
+    setKitOrdered(true);
+    toast.success("Your kit is on the way — unlocking your full plan.");
   };
 
 
@@ -890,18 +882,33 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
       variantSku: r.variantSku || "",
     }));
 
-  const kitInCart =
-    Array.isArray(cart?.items) &&
-    recommendedKitItems.length > 0 &&
-    recommendedKitItems.every((ki) =>
-      cart.items.some(
-        (ci) =>
-          String(ci.productId?._id || ci.productId) === String(ki.productId) &&
-          String(ci.variantId) === String(ki.variantId)
-      )
-    );
+  // Unlock when an order containing these kit products already exists for this user.
+  const [kitInOrders, setKitInOrders] = React.useState(false);
 
-  const nutritionUnlocked = kitAdded || kitInCart;
+  React.useEffect(() => {
+    let cancelled = false;
+    if (!fullReport || recommendedKitItems.length === 0) return;
+
+    (async () => {
+      try {
+        const res = await getMyOrders({ limit: 50 });
+        const orders = res?.data?.items ?? res?.items ?? [];
+        const wantedIds = new Set(recommendedKitItems.map((ki) => String(ki.productId)));
+        const matched = orders.some((o) =>
+          (o.items || []).some(
+            (it) =>
+              wantedIds.has(String(it.productId?._id || it.productId)) &&
+              ['placed', 'confirmed', 'processing', 'shipped', 'delivered'].includes(o.orderStatus)
+          )
+        );
+        if (!cancelled && matched) setKitInOrders(true);
+      } catch (_) {}
+    })();
+
+    return () => { cancelled = true; };
+  }, [fullReport, recommendedKitItems.length]);
+
+  const nutritionUnlocked = kitOrdered || kitInOrders;
 
   const healthIndicatorsRaw = resolveItems(
     lockedNarrative?.healthIndicators?.dashboard,
@@ -5951,6 +5958,23 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
           </footer>
         </div>
       </section>
+
+      <TrichoCheckoutModal
+        open={checkoutOpen}
+        onClose={() => setCheckoutOpen(false)}
+        items={recommendedKitItems.map((ki) => {
+          const row = recommendationRows.find(
+            (r) => String(r.productId) === String(ki.productId) && String(r.variantId) === String(ki.variantId)
+          );
+          return {
+            ...ki,
+            title: row?.title || "Recommended Product",
+            image: formatUrl(row?.image) || sharedThumbImage,
+          };
+        })}
+        sessionId={resolvedSessionId}
+        onOrderBooked={handleKitOrdered}
+      />
     </>
   );
 }
