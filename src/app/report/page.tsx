@@ -294,6 +294,7 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
   const [reportData, setReportData] = React.useState(initialResolved);
   const [checkoutOpen, setCheckoutOpen] = React.useState(false);
   const [kitOrdered, setKitOrdered] = React.useState(false);
+  const [confirmedOrderNo, setConfirmedOrderNo] = React.useState('');
   const adding = false;
   const [loading, setLoading] = React.useState(!initialData);
   const [resolvedSessionId, setResolvedSessionId] = React.useState(sessionId || "");
@@ -306,7 +307,26 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
       try { await onDownloadPdf(); } catch (e) { /* noop */ }
       return;
     }
+
     // No server PDF — use the browser's native "Save as PDF" via print.
+    // document.title becomes the default save filename, so set it first.
+    const prevTitle = document.title;
+    const rawName =
+      reportData?.patientName ||
+      reportData?.lead?.name ||
+      reportData?.reportId ||
+      resolvedSessionId ||
+      'TrichoScan-Report';
+    const fileName = String(rawName).trim().replace(/[^\w\-]+/g, '_').replace(/^_+|_+$/g, '');
+    document.title = fileName || 'TrichoScan-Report';
+
+    const restore = () => {
+      document.title = prevTitle;
+      window.removeEventListener('afterprint', restore);
+    };
+    window.addEventListener('afterprint', restore);
+    setTimeout(restore, 60000); // fallback if afterprint never fires
+
     window.print();
   };
 
@@ -909,6 +929,20 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
   }, [fullReport, recommendedKitItems.length]);
 
   const nutritionUnlocked = kitOrdered || kitInOrders;
+
+  // On return from payment (?order=...) show the order-confirmed popup once,
+  // then strip the param so it doesn't re-fire on refresh.
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const ord = params.get('order');
+    if (ord) {
+      setConfirmedOrderNo(ord);
+      params.delete('order');
+      const qs = params.toString();
+      window.history.replaceState({}, '', window.location.pathname + (qs ? `?${qs}` : ''));
+    }
+  }, []);
 
   const healthIndicatorsRaw = resolveItems(
     lockedNarrative?.healthIndicators?.dashboard,
@@ -1962,7 +1996,7 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
                       </svg>
                     </span>
                   </div>
-                  <h4>Dr. Amit Sharma</h4>
+                  <h4>Dr. Amit Agarkar</h4>
                   <p className="doctor-role">MD Dermatology</p>
                   <p className="doctor-cert">Certified Trichologist</p>
                 </div>
@@ -5702,10 +5736,11 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
                     </svg>
                     <span>
                       <b>5 freebies unlocked</b>
-                      <em> - add your kit to claim them</em>
+                      {!nutritionUnlocked && (
+                      <em> - add your kit to claim them</em>)}
                     </span>
                   </div>
-
+                        {!nutritionUnlocked && (
                   <button type="button" className="freebies-cta-btn" onClick={handleAddRecommendedKit}
                     disabled={adding}>
                     <svg
@@ -5722,6 +5757,7 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
                     </svg>
                     {adding ? 'Adding…' : 'Proceed with the Recommended Kit'}
                   </button>
+                  )}
                 </article>
               )}
             </aside>
@@ -5975,6 +6011,23 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
         sessionId={resolvedSessionId}
         onOrderBooked={handleKitOrdered}
       />
+
+      {confirmedOrderNo && (
+        <div className="tco-overlay" role="dialog" aria-modal="true" onClick={() => setConfirmedOrderNo('')}>
+          <div className="order-confirmed-card" onClick={(e) => e.stopPropagation()}>
+            <div className="order-confirmed-check">✓</div>
+            <h3>Order Confirmed!</h3>
+            <p className="order-confirmed-no">Order {confirmedOrderNo}</p>
+            <p className="order-confirmed-sub">
+              Your payment was successful and your treatment kit is booked. Your full report and free
+              guidance are now unlocked.
+            </p>
+            <button className="order-confirmed-btn" onClick={() => setConfirmedOrderNo('')}>
+              View My Full Report
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

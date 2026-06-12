@@ -2032,7 +2032,71 @@ const ResultsView = ({ sessionId, userProfile = {} }) => {
 
             <div className="res-preview-card locked">
               <div className="locked-report-bg">
-                <img src="/yourreportpreview.png" alt="Report Preview" />
+                <div className="mock-report" aria-hidden="true">
+                  {/* header */}
+                  <div className="mock-report-header">
+                    <div className="mock-rh-left">
+                      <div className="mock-rh-title" />
+                      <div className="mock-rh-sub" />
+                    </div>
+                    <div className="mock-rh-badge">TrichoScan AI</div>
+                  </div>
+
+                  {/* HHI score */}
+                  <div className="mock-score-card">
+                    <div className="mock-gauge">
+                      <div className="mock-gauge-num">72</div>
+                      <div className="mock-gauge-label">HHI Score</div>
+                    </div>
+                    <div className="mock-score-meta">
+                      <div className="mock-bar"><span style={{ width: '72%' }} /></div>
+                      <div className="mock-line w80" />
+                      <div className="mock-line w60" />
+                      <div className="mock-chip-row">
+                        <span className="mock-chip cyan" />
+                        <span className="mock-chip gold" />
+                        <span className="mock-chip teal" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* condition panels */}
+                  <div className="mock-grid-2">
+                    <div className="mock-panel">
+                      <div className="mock-panel-title" />
+                      <div className="mock-line w90" />
+                      <div className="mock-line w70" />
+                      <div className="mock-line w85" />
+                    </div>
+                    <div className="mock-panel">
+                      <div className="mock-panel-title" />
+                      <div className="mock-donut" />
+                      <div className="mock-line w60" />
+                    </div>
+                  </div>
+
+                  {/* phases */}
+                  <div className="mock-phases">
+                    <div className="mock-phase">
+                      <div className="mock-phase-dot" />
+                      <div className="mock-phase-body"><div className="mock-line w50" /><div className="mock-line w80" /></div>
+                    </div>
+                    <div className="mock-phase">
+                      <div className="mock-phase-dot gold" />
+                      <div className="mock-phase-body"><div className="mock-line w40" /><div className="mock-line w70" /></div>
+                    </div>
+                    <div className="mock-phase">
+                      <div className="mock-phase-dot teal" />
+                      <div className="mock-phase-body"><div className="mock-line w55" /><div className="mock-line w65" /></div>
+                    </div>
+                  </div>
+
+                  {/* recommendation rows */}
+                  <div className="mock-recos">
+                    <div className="mock-reco"><div className="mock-thumb" /><div className="mock-reco-body"><div className="mock-line w70" /><div className="mock-line w40" /></div></div>
+                    <div className="mock-reco"><div className="mock-thumb" /><div className="mock-reco-body"><div className="mock-line w60" /><div className="mock-line w45" /></div></div>
+                  </div>
+                </div>
               </div>
               <div className="lock-overlay">
                 <div className="floating-badges-stack">

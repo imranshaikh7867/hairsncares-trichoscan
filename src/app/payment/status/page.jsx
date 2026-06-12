@@ -42,9 +42,10 @@ function PaymentStatusInner() {
       setPhase(next);
       if (next === 'success') {
         setRedirecting(true);
-        // TrichoScan kit → back to report (unlocks full plan). Else → orders.
+        // TrichoScan kit → back to report (unlocks full plan) + show confirmation popup.
+        const orderNo = ord?.orderNumber ? `&order=${encodeURIComponent(ord.orderNumber)}` : '';
         const dest = tref
-          ? `/report?sessionId=${encodeURIComponent(tref)}`
+          ? `/report?sessionId=${encodeURIComponent(tref)}${orderNo}`
           : '/dashboard/orders';
         setTimeout(() => router.replace(dest), 2200);
       }

@@ -20,7 +20,6 @@ export default function TrichoCheckoutModal({ open, onClose, items = [], session
 
   const [selectedAddrId, setSelectedAddrId] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [payMethod, setPayMethod] = useState('online'); // 'online' | 'cod'
 
   const [form, setForm] = useState({
     fullName: '', phone: '', line1: '', line2: '',
@@ -80,7 +79,7 @@ export default function TrichoCheckoutModal({ open, onClose, items = [], session
     const result = await placeOrder({
       items: orderItems,
       addressId: selectedAddrId,
-      paymentMethod: payMethod === 'cod' ? 'cod' : 'phonepe',
+      paymentMethod: 'phonepe',
       sessionId,
     });
     if (!result) return;
@@ -233,30 +232,7 @@ export default function TrichoCheckoutModal({ open, onClose, items = [], session
             )}
           </section>
 
-          {/* Payment method */}
-          <section className="tco-section">
-            <p className="tco-label">Payment Method</p>
-            <div className="tco-pay-grid">
-              <button type="button"
-                className={`tco-pay-opt${payMethod === 'online' ? ' active' : ''}`}
-                onClick={() => setPayMethod('online')}>
-                <span className="tco-pay-radio" />
-                <span className="tco-pay-copy">
-                  <strong>Pay Online</strong>
-                  <span>UPI / Card / Netbanking — secure PhonePe</span>
-                </span>
-              </button>
-              <button type="button"
-                className={`tco-pay-opt${payMethod === 'cod' ? ' active' : ''}`}
-                onClick={() => setPayMethod('cod')}>
-                <span className="tco-pay-radio" />
-                <span className="tco-pay-copy">
-                  <strong>Cash on Delivery</strong>
-                  <span>Pay when your order arrives</span>
-                </span>
-              </button>
-            </div>
-          </section>
+          
 
           {/* Totals */}
           <section className="tco-totals">
@@ -277,11 +253,7 @@ export default function TrichoCheckoutModal({ open, onClose, items = [], session
 
         <footer className="tco-footer">
           <button type="button" className="tco-place-btn" onClick={handlePlace} disabled={placing || !selectedAddrId}>
-            {placing
-              ? 'Placing Order…'
-              : payMethod === 'cod'
-                ? `Place Order (COD) — ${inr(total)}`
-                : `Pay ${inr(total)} & Place Order`}
+            {placing ? 'Redirecting to Payment…' : `Pay ${inr(total)} & Place Order`}
           </button>
           <p className="tco-secure">🔒 Secure checkout · Free returns within 7 days</p>
         </footer>

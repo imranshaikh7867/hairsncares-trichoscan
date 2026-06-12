@@ -12523,3 +12523,115 @@ linear-gradient(180deg, rgba(2, 11, 31, 0.92) 0%, rgba(2, 8, 24, 0.9) 100%); */
       gap: 10px !important;
    }
 }
+
+/* ── Order confirmed popup (rendered from report.jsx) ── */
+.order-confirmed-card {
+  width: 100%; max-width: 420px;
+  background: #0A2034; border: 1px solid rgba(0, 229, 255, 0.18);
+  border-radius: 18px; padding: 34px 26px; text-align: center;
+  color: #E6F1FF; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+.order-confirmed-check {
+  width: 64px; height: 64px; margin: 0 auto 16px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(16, 185, 129, 0.14); color: #10B981; font-size: 30px; font-weight: 800;
+}
+.order-confirmed-card h3 { font-size: 20px; font-weight: 800; margin: 0 0 6px; }
+.order-confirmed-no { color: #F4C430; font-weight: 700; font-size: 14px; margin: 0 0 10px; }
+.order-confirmed-sub { font-size: 13px; color: #9FB4D0; line-height: 1.6; margin: 0 0 22px; }
+.order-confirmed-btn {
+  width: 100%; background: linear-gradient(90deg, #F4C430, #ffd95e);
+  border: none; border-radius: 10px; padding: 13px; color: #021220;
+  font-weight: 800; font-size: 14px; cursor: pointer;
+}
+
+/* ── Force backgrounds/colors to render when printing ── */
+@media print {
+  html, body, * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* Make sure the page background itself is the report theme, not white */
+  html, body {
+    background: #061626 !important;
+  }
+
+  /* Hide interactive chrome that shouldn't be in the PDF.
+     Adjust these selectors to your actual button classes. */
+  .download-report-btn,
+  .report-action-bar,
+  .tco-overlay,
+  .order-confirmed-card,
+  header nav, .site-header, .site-footer {
+    display: none !important;
+  }
+
+  /* Avoid awkward page breaks inside cards/sections */
+  section, .report-card, .report-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  @page { margin: 12mm; }
+}
+
+/* ── Fake blurred report preview (sits behind the lock overlay) ── */
+.locked-report-bg .mock-report {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: #061626;
+  filter: blur(4px);
+  opacity: 0.92;
+  pointer-events: none;
+  user-select: none;
+}
+.mock-report .mock-line { height: 8px; border-radius: 6px; background: rgba(159, 180, 208, 0.25); }
+.mock-report .w40 { width: 40%; } .mock-report .w45 { width: 45%; } .mock-report .w50 { width: 50%; }
+.mock-report .w55 { width: 55%; } .mock-report .w60 { width: 60%; } .mock-report .w65 { width: 65%; }
+.mock-report .w70 { width: 70%; } .mock-report .w80 { width: 80%; } .mock-report .w85 { width: 85%; }
+.mock-report .w90 { width: 90%; }
+
+.mock-report-header { display: flex; align-items: center; justify-content: space-between; }
+.mock-rh-title { width: 120px; height: 12px; border-radius: 6px; background: rgba(0, 229, 255, 0.45); margin-bottom: 6px; }
+.mock-rh-sub { width: 80px; height: 8px; border-radius: 6px; background: rgba(159, 180, 208, 0.3); }
+.mock-rh-badge { font-size: 10px; font-weight: 800; color: #021220; background: linear-gradient(90deg, #F4C430, #ffd95e); padding: 4px 10px; border-radius: 20px; }
+
+.mock-score-card { display: flex; gap: 14px; background: #0A2034; border: 1px solid rgba(0, 229, 255, 0.12); border-radius: 12px; padding: 14px; }
+.mock-gauge {
+  width: 84px; height: 84px; border-radius: 50%; flex-shrink: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  position: relative;
+  background: conic-gradient(#00E5FF 0% 72%, rgba(255, 255, 255, 0.08) 72% 100%);
+}
+.mock-gauge::after { content: ''; position: absolute; inset: 8px; border-radius: 50%; background: #0A2034; }
+.mock-gauge-num { position: relative; z-index: 1; font-size: 24px; font-weight: 800; color: #fff; }
+.mock-gauge-label { position: relative; z-index: 1; font-size: 9px; color: #9FB4D0; }
+.mock-score-meta { flex: 1; display: flex; flex-direction: column; gap: 8px; justify-content: center; }
+.mock-bar { height: 8px; border-radius: 6px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+.mock-bar span { display: block; height: 100%; background: linear-gradient(90deg, #00E5FF, #0ED7B5); }
+.mock-chip-row { display: flex; gap: 6px; }
+.mock-chip { width: 42px; height: 16px; border-radius: 20px; }
+.mock-chip.cyan { background: rgba(0, 229, 255, 0.3); }
+.mock-chip.gold { background: rgba(244, 196, 48, 0.3); }
+.mock-chip.teal { background: rgba(14, 215, 181, 0.3); }
+
+.mock-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.mock-panel { background: #0A2034; border: 1px solid rgba(0, 229, 255, 0.1); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.mock-panel-title { width: 60%; height: 10px; border-radius: 6px; background: rgba(0, 229, 255, 0.4); margin-bottom: 2px; }
+.mock-donut { width: 54px; height: 54px; border-radius: 50%; align-self: center; background: conic-gradient(#F4C430 0 40%, #00E5FF 40% 70%, #0ED7B5 70% 100%); }
+
+.mock-phases { display: flex; flex-direction: column; gap: 10px; }
+.mock-phase { display: flex; gap: 10px; align-items: flex-start; }
+.mock-phase-dot { width: 14px; height: 14px; border-radius: 50%; background: #00E5FF; flex-shrink: 0; margin-top: 2px; }
+.mock-phase-dot.gold { background: #F4C430; }
+.mock-phase-dot.teal { background: #0ED7B5; }
+.mock-phase-body { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+
+.mock-recos { display: flex; flex-direction: column; gap: 10px; }
+.mock-reco { display: flex; gap: 10px; align-items: center; background: #0A2034; border: 1px solid rgba(0, 229, 255, 0.1); border-radius: 10px; padding: 10px; }
+.mock-thumb { width: 40px; height: 40px; border-radius: 8px; background: linear-gradient(135deg, #0C2C45, #123a59); flex-shrink: 0; }
+.mock-reco-body { flex: 1; display: flex; flex-direction: column; gap: 6px; }
