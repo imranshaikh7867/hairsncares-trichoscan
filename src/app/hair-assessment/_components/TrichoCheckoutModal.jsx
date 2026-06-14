@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { toast } from 'react-toastify';
 import { FaTimes, FaPlus, FaLock, FaTrashAlt } from 'react-icons/fa';
 import { useAuth } from '@/context/AuthContext';
@@ -20,6 +21,9 @@ export default function TrichoCheckoutModal({ open, onClose, items = [], session
 
   const [selectedAddrId, setSelectedAddrId] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   const [form, setForm] = useState({
     fullName: '', phone: '', line1: '', line2: '',
@@ -96,9 +100,9 @@ export default function TrichoCheckoutModal({ open, onClose, items = [], session
     }
   };
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
+  return createPortal(
     <div className="tco-overlay" role="dialog" aria-modal="true">
       <div className="tco-modal">
         <header className="tco-header">
@@ -258,6 +262,7 @@ export default function TrichoCheckoutModal({ open, onClose, items = [], session
           <p className="tco-secure">🔒 Secure checkout · Free returns within 7 days</p>
         </footer>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

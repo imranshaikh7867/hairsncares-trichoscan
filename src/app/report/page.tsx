@@ -12,6 +12,7 @@ import {
   selectReportDataLoading,
 } from '@/redux/slices/reportSlice';
 import { toast } from 'react-toastify';
+import { createPortal } from "react-dom";
 import TrichoCheckoutModal from "@/app/hair-assessment/_components/TrichoCheckoutModal";
 import { getMyOrders } from "@/app/hair-assessment/orderApi";
 
@@ -6012,7 +6013,7 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
         onOrderBooked={handleKitOrdered}
       />
 
-      {confirmedOrderNo && (
+      {confirmedOrderNo && typeof document !== "undefined" && createPortal(
         <div className="tco-overlay" role="dialog" aria-modal="true" onClick={() => setConfirmedOrderNo('')}>
           <div className="order-confirmed-card" onClick={(e) => e.stopPropagation()}>
             <div className="order-confirmed-check">✓</div>
@@ -6026,7 +6027,8 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
               View My Full Report
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
