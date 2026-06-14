@@ -1,0 +1,48 @@
+.nav-user-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  color: #00e5ff;
+  background: rgba(0, 229, 255, 0.08);
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.nav-user-icon:hover {
+  background: rgba(0, 229, 255, 0.16);
+  border-color: rgba(0, 229, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+.nav-user-icon svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+/* Groups the icon with any pre-existing right-side header content */
+.header-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+@media (max-width: 768px) {
+  .nav-user-icon {
+    width: 34px;
+    height: 34px;
+  }
+  .nav-user-icon svg {
+    width: 19px;
+    height: 19px;
+  }
+  .header-right-actions {
+    gap: 8px;
+  }
+}

@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useAppDispatch } from '@/redux/hooks';
 import { toast } from 'react-toastify';
 import './HairAssessmentFlow.css';
+import NavUserIcon from '@/app/_components/NavUserIcon';
 import {
   fetchAssessmentQuestionsThunk,
   createSessionThunk,
@@ -630,9 +631,12 @@ const HairAssessmentFlow = () => {
           <div className="header-left-group">
             <div className="back-btn"><FaChevronLeft /> BACK</div>
             <div className="header-divider"></div>
-            <div className="prep-logo"><img src="/reportlogo.png" alt="HairSnCare" /></div>
+            <div className="prep-logo"><img src="/logo.webp" alt="HairSnCare" /></div>
           </div>
-          <div className="shimmer-active shimmer-tab-item" style={{ width: 80, height: 20 }}></div>
+          <div className="header-right-actions">
+            <div className="shimmer-active shimmer-tab-item" style={{ width: 80, height: 20 }}></div>
+            <NavUserIcon />
+          </div>
         </header>
 
         <main className="flow-content shimmer-wrapper">
@@ -687,11 +691,14 @@ const HairAssessmentFlow = () => {
           </button>
           <div className="header-divider"></div>
           <div className="prep-logo">
-            <img src="/reportlogo.png" alt="HairSnCare" />
+            <img src="/logo.webp" alt="HairSnCare" />
           </div>
         </div>
-        <div className="step-indicator">
-          Step {currentStep.toString().padStart(2, '0')} / {sections.length.toString().padStart(2, '0')}
+        <div className="header-right-actions">
+          <div className="step-indicator">
+            Step {currentStep.toString().padStart(2, '0')} / {sections.length.toString().padStart(2, '0')}
+          </div>
+          <NavUserIcon />
         </div>
       </header>
 
@@ -1157,10 +1164,13 @@ const AiAnalysisView = ({ sessionId, subStep, setSubStep, onBack, onNext, userPr
             </div>
             <div className="header-divider"></div>
             <div className="prep-logo">
-              <img src="/reportlogo.png" alt="HairSnCare" />
+              <img src="/logo.webp" alt="HairSnCare" />
             </div>
           </div>
-          <div className="header-right">AI Analysis</div>
+          <div className="header-right-actions">
+            <div className="header-right">AI Analysis</div>
+            <NavUserIcon />
+          </div>
         </header>
 
         <div className="ai-progress-status">
@@ -1302,10 +1312,13 @@ const AiAnalysisView = ({ sessionId, subStep, setSubStep, onBack, onNext, userPr
           </div>
           <div className="header-divider"></div>
           <div className="prep-logo">
-            <img src="/reportlogo.png" alt="HairSnCare" />
+            <img src="/logo.webp" alt="HairSnCare" />
           </div>
         </div>
-        <div className="header-right">AI Analysis</div>
+        <div className="header-right-actions">
+          <div className="header-right">AI Analysis</div>
+          <NavUserIcon />
+        </div>
       </header>
 
       <div className="ai-progress-status">
@@ -1540,10 +1553,13 @@ const ProcessingView = ({ sessionId, onBack, onComplete }) => {
           </div>
           <div className="header-divider"></div>
           <div className="prep-logo">
-            <img src="/reportlogo.png" alt="HairSnCare" />
+            <img src="/logo.webp" alt="HairSnCare" />
           </div>
         </div>
-        <div className="header-right">AI Diagnostic Processing</div>
+        <div className="header-right-actions">
+          <div className="header-right">AI Diagnostic Processing</div>
+          <NavUserIcon />
+        </div>
       </header>
 
       <main className="ai-content-main proc-content">
@@ -1991,13 +2007,16 @@ const ResultsView = ({ sessionId, userProfile = {} }) => {
         <div className="header-left-group">
           <div className="prep-logo">
             <Link href="/">
-              <img src="/logo.png" alt="HairSnCare" />
+              <img src="/logo.webp" alt="HairSnCare" />
             </Link>
           </div>
         </div>
-        <div className="res-status-pill">
-          <span className="pill-dot"></span>
-          Analysis Complete
+        <div className="header-right-actions">
+          <div className="res-status-pill">
+            <span className="pill-dot"></span>
+            Analysis Complete
+          </div>
+          <NavUserIcon />
         </div>
       </header>
 
