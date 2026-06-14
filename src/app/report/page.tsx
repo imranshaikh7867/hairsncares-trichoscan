@@ -14,6 +14,7 @@ import {
 import { toast } from 'react-toastify';
 import { createPortal } from "react-dom";
 import TrichoCheckoutModal from "@/app/hair-assessment/_components/TrichoCheckoutModal";
+import NavUserIcon from "@/app/_components/NavUserIcon";
 import { getMyOrders } from "@/app/hair-assessment/orderApi";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
@@ -1652,7 +1653,7 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
               </svg>
               <span>Back</span>
             </button>
-            <img src="/reportlogo.png" alt="HairSnCare" className="report-logo-img" />
+            <img src="/logo.webp" alt="HairSnCare" className="report-logo-img" />
           </div>
 
           <div className="header-center-group">
@@ -1676,6 +1677,7 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
               </svg>
               <span>{isDownloading ? 'Downloading...' : 'Download Report'}</span>
             </button>
+            <NavUserIcon />
           </div>
         </div>
 

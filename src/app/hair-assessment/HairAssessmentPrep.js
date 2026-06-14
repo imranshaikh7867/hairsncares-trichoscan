@@ -3,6 +3,7 @@
 import React from "react";
 import "./HairAssessmentPrep.css";
 import { FaChevronLeft, FaSpinner } from "react-icons/fa";
+import NavUserIcon from "@/app/_components/NavUserIcon";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
@@ -53,16 +54,17 @@ const HairAssessmentPrep = () => {
       {/* Header */}
       <header className="prep-header">
         <div className="header-left-group">
-          <button className="back-btn" onClick={() => router.back()}>
+          <a className="back-btn" href="https://hairsncares.in/">
             <FaChevronLeft /> BACK
-          </button>
+          </a>
           <div className="header-divider"></div>
           <div className="prep-logo">
             <Link href="/">
-              <img src="/reportlogo.png" alt="HairSnCare" />
+              <img src="/logo.webp" alt="HairSnCare" />
             </Link>
           </div>
         </div>
+        <NavUserIcon />
       </header>
 
       <main className="prep-content">
