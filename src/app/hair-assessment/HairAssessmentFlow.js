@@ -2051,69 +2051,65 @@ const ResultsView = ({ sessionId, userProfile = {} }) => {
 
             <div className="res-preview-card locked">
               <div className="locked-report-bg">
-                <div className="mock-report" aria-hidden="true">
-                  {/* header */}
-                  <div className="mock-report-header">
-                    <div className="mock-rh-left">
-                      <div className="mock-rh-title" />
-                      <div className="mock-rh-sub" />
+                {/* Faithful (but blurred) replica of the real Hair Intelligence Report */}
+                <div className="report-replica" aria-hidden="true">
+                  {/* top bar */}
+                  <div className="rr-topbar">
+                    <div className="rr-brand">
+                      <span className="rr-brand-ico"><FaStethoscope /></span>
+                      <span className="rr-brand-text">Diagnostic Report — Hair</span>
                     </div>
-                    <div className="mock-rh-badge">TrichoScan AI</div>
+                    <span className="rr-pill-outline">Questionnaire Report</span>
                   </div>
 
-                  {/* HHI score */}
-                  <div className="mock-score-card">
-                    <div className="mock-gauge">
-                      <div className="mock-gauge-num">72</div>
-                      <div className="mock-gauge-label">HHI Score</div>
-                    </div>
-                    <div className="mock-score-meta">
-                      <div className="mock-bar"><span style={{ width: '72%' }} /></div>
-                      <div className="mock-line w80" />
-                      <div className="mock-line w60" />
-                      <div className="mock-chip-row">
-                        <span className="mock-chip cyan" />
-                        <span className="mock-chip gold" />
-                        <span className="mock-chip teal" />
-                      </div>
-                    </div>
+                  {/* status row */}
+                  <div className="rr-status-row">
+                    <span className="rr-status-chip rr-ok">✓ Assessment Complete</span>
+                    <span className="rr-status-chip">ID: 47091972</span>
+                    <span className="rr-status-date">Mar 31, 2026</span>
                   </div>
 
-                  {/* condition panels */}
-                  <div className="mock-grid-2">
-                    <div className="mock-panel">
-                      <div className="mock-panel-title" />
-                      <div className="mock-line w90" />
-                      <div className="mock-line w70" />
-                      <div className="mock-line w85" />
-                    </div>
-                    <div className="mock-panel">
-                      <div className="mock-panel-title" />
-                      <div className="mock-donut" />
-                      <div className="mock-line w60" />
+                  {/* hero */}
+                  <div className="rr-hero">
+                    <div className="rr-hero-thumb" />
+                    <div className="rr-hero-main">
+                      <h3 className="rr-hero-title">Hair Intelligence Report</h3>
+                      <p className="rr-hero-desc">
+                        Clinical findings indicate Telogen Effluvium (68% probability) as the primary
+                        pattern for this patient. Hair Health Index of 81/100 places overall status in
+                        the MILD band with HIGH urgency.
+                      </p>
                     </div>
                   </div>
 
-                  {/* phases */}
-                  <div className="mock-phases">
-                    <div className="mock-phase">
-                      <div className="mock-phase-dot" />
-                      <div className="mock-phase-body"><div className="mock-line w50" /><div className="mock-line w80" /></div>
+                  {/* category cards */}
+                  <div className="rr-cards">
+                    <div className="rr-card rr-card-amber">
+                      <span className="rr-card-label">Assessment Category</span>
+                      <strong className="rr-card-value">Category 1 — Telogen Effluvium</strong>
+                      <span className="rr-card-sub">Alopecia Classification</span>
                     </div>
-                    <div className="mock-phase">
-                      <div className="mock-phase-dot gold" />
-                      <div className="mock-phase-body"><div className="mock-line w40" /><div className="mock-line w70" /></div>
+                    <div className="rr-card rr-card-cyan">
+                      <span className="rr-card-label">Trichological Assessment</span>
+                      <strong className="rr-card-value">Telogen Effluvium — Diffuse Phase</strong>
+                      <span className="rr-card-sub">Primary Finding</span>
                     </div>
-                    <div className="mock-phase">
-                      <div className="mock-phase-dot teal" />
-                      <div className="mock-phase-body"><div className="mock-line w55" /><div className="mock-line w65" /></div>
+                    <div className="rr-card rr-card-teal">
+                      <span className="rr-card-label">Risk Level</span>
+                      <strong className="rr-card-value">High Risk</strong>
+                      <div className="rr-card-bar"><span style={{ width: '78%' }} /></div>
+                      <span className="rr-card-sub">Progressive Loss Risk</span>
                     </div>
                   </div>
 
-                  {/* recommendation rows */}
-                  <div className="mock-recos">
-                    <div className="mock-reco"><div className="mock-thumb" /><div className="mock-reco-body"><div className="mock-line w70" /><div className="mock-line w40" /></div></div>
-                    <div className="mock-reco"><div className="mock-thumb" /><div className="mock-reco-body"><div className="mock-line w60" /><div className="mock-line w45" /></div></div>
+                  {/* medical review */}
+                  <div className="rr-review">
+                    <div className="rr-review-doc" />
+                    <div className="rr-review-body">
+                      <div className="rr-line w70" />
+                      <div className="rr-line w90" />
+                      <div className="rr-line w55" />
+                    </div>
                   </div>
                 </div>
               </div>
