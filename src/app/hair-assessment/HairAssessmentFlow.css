@@ -2195,8 +2195,13 @@
 .locked-report-bg {
   width: 100%;
   height: 100%;
-  opacity: 0.3;
-  filter: blur(4px);
+  opacity: 0.9;
+  filter: blur(2px);
+  /* slight upscale hides the soft blurred edges inside the card */
+  transform: scale(1.03);
+  transform-origin: top center;
+  pointer-events: none;
+  user-select: none;
 }
 
 .locked-report-bg img {
@@ -2204,6 +2209,228 @@
   height: 100%;
   object-fit: cover;
 }
+
+/* ---- Blurred report replica (looks like the real Hair Intelligence Report) ---- */
+.report-replica {
+  width: 100%;
+  height: 100%;
+  padding: 22px 22px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background:
+    radial-gradient(120% 80% at 0% 0%, rgba(0, 229, 255, 0.06), transparent 60%),
+    #050E20;
+  color: #E6F1FF;
+  text-align: left;
+}
+
+.rr-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rr-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rr-brand-ico {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 229, 255, 0.12);
+  color: #00E5FF;
+  font-size: 14px;
+}
+
+.rr-brand-text {
+  font-size: 15px;
+  font-weight: 700;
+  color: #E6F1FF;
+}
+
+.rr-pill-outline {
+  font-size: 11px;
+  font-weight: 600;
+  color: #00E5FF;
+  padding: 6px 12px;
+  border: 1px solid rgba(0, 229, 255, 0.4);
+  border-radius: 999px;
+}
+
+.rr-status-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.rr-status-chip {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9FB4D0;
+  padding: 5px 10px;
+  border: 1px solid rgba(27, 79, 131, 0.45);
+  border-radius: 8px;
+}
+
+.rr-status-chip.rr-ok {
+  color: #0ED7B5;
+  border-color: rgba(14, 215, 181, 0.4);
+}
+
+.rr-status-date {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  color: #9FB4D0;
+  padding: 5px 10px;
+  border: 1px solid rgba(27, 79, 131, 0.45);
+  border-radius: 8px;
+}
+
+.rr-hero {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.rr-hero-thumb {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background:
+    repeating-conic-gradient(#0b1b33 0% 25%, #102444 0% 50%) 0 0 / 16px 16px;
+  border: 1px solid rgba(0, 229, 255, 0.25);
+}
+
+.rr-hero-title {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.15;
+  margin: 0 0 8px;
+  color: #4FC9F0;
+}
+
+.rr-hero-desc {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #6E89AB;
+  margin: 0;
+}
+
+.rr-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.rr-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  border-radius: 14px;
+  background: #08172E;
+  border: 1px solid rgba(27, 79, 131, 0.35);
+}
+
+.rr-card-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.rr-card-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: #E6F1FF;
+  line-height: 1.3;
+}
+
+.rr-card-sub {
+  font-size: 10px;
+  color: #5E7A9C;
+}
+
+.rr-card-amber {
+  border-color: rgba(244, 196, 48, 0.35);
+}
+.rr-card-amber .rr-card-label {
+  color: #F4C430;
+}
+
+.rr-card-cyan {
+  border-color: rgba(0, 229, 255, 0.35);
+}
+.rr-card-cyan .rr-card-label {
+  color: #00E5FF;
+}
+
+.rr-card-teal {
+  border-color: rgba(14, 215, 181, 0.35);
+}
+.rr-card-teal .rr-card-label {
+  color: #0ED7B5;
+}
+
+.rr-card-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(27, 79, 131, 0.4);
+  overflow: hidden;
+}
+
+.rr-card-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #0ED7B5, #F4C430);
+}
+
+.rr-review {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 16px;
+  border-radius: 14px;
+  background: #08172E;
+  border: 1px solid rgba(27, 79, 131, 0.35);
+}
+
+.rr-review-doc {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, #1B4F83, #0b1b33);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+}
+
+.rr-review-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rr-line {
+  height: 10px;
+  border-radius: 6px;
+  background: rgba(27, 79, 131, 0.45);
+}
+
+.rr-line.w55 { width: 55%; }
+.rr-line.w70 { width: 70%; }
+.rr-line.w90 { width: 90%; }
 
 .lock-overlay {
   position: absolute;
@@ -2740,6 +2967,14 @@
 
   .res-hero-title {
     font-size: 32px;
+  }
+
+  .report-replica {
+    padding: 18px 18px 0;
+  }
+
+  .rr-hero-title {
+    font-size: 19px;
   }
 }
 
