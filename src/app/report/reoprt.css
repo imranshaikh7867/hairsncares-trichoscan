@@ -165,12 +165,27 @@ color: #7A9BBB;
 
 }
 .report-main-header {
-   babackground: linear-gradient(0deg, #020617 0%, #041126 100%) !important;
+   background: #f2f0ec !important;
 
-   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+   border-bottom: 1px solid rgba(4, 17, 38, 0.1);
    padding-top: 14px;
    padding-bottom: 0;
-   color: #fff;
+   color: #041126;
+}
+
+/* Dark text/icons for the light (#f2f0ec) header background */
+.report-main-header .back-link-btn,
+.report-main-header .meta-date-chip,
+.report-main-header .report-id-chip {
+   color: #475569;
+}
+
+.report-main-header .back-link-btn:hover {
+   color: #0a3d4a;
+}
+
+.report-main-header .header-bottom-meta {
+   border-top: 1px solid rgba(4, 17, 38, 0.08);
 }
 
 .header-top-row {
