@@ -3150,12 +3150,37 @@
   justify-content: space-between;
   align-items: center;
   padding: 16px 40px;
-  background-color: #041126;
-  border-bottom: 1px solid rgba(5, 67, 88, 0.5);
+  background-color: #f2f0ec;
+  border-bottom: 1px solid rgba(4, 17, 38, 0.12);
   position: sticky;
   top: 0;
   z-index: 1000;
   backdrop-filter: blur(10px);
+}
+
+/* Dark text/icons for the light (#f2f0ec) header background */
+.prep-header .back-btn,
+.prep-header .step-indicator {
+  color: #041126;
+}
+
+.prep-header .back-btn:hover {
+  color: #0a3d4a;
+}
+
+.prep-header .header-divider {
+  background: rgba(4, 17, 38, 0.2);
+}
+
+.prep-header .nav-user-icon {
+  color: #041126;
+  background: rgba(4, 17, 38, 0.06);
+  border-color: rgba(4, 17, 38, 0.25);
+}
+
+.prep-header .nav-user-icon:hover {
+  background: rgba(4, 17, 38, 0.12);
+  border-color: rgba(4, 17, 38, 0.5);
 }
 
 .header-left-group {
