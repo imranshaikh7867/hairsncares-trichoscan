@@ -6,7 +6,10 @@ const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
 
 const axiosInstance = axios.create({
   baseURL,
-  timeout: 30000,
+  // The API sleeps when idle and can take the better part of a minute to answer
+  // the first request. At 30s the unlock call timed out on a cold start and the
+  // user was told their OTP was wrong.
+  timeout: 90000,
 });
 
 axiosInstance.interceptors.request.use(
@@ -30,6 +33,15 @@ axiosInstance.interceptors.request.use(
 );
 
 export const toApiErrorMessage = (error) => {
+  // A request the browser refused to send — blocked by CORS, offline, or the
+  // API unreachable — arrives with no response at all and the bare text
+  // "Network Error", which tells the user nothing about what to do.
+  if (!error?.response && (error?.code === 'ERR_NETWORK' || error?.message === 'Network Error')) {
+    return 'Could not reach the server. Please check your connection and try again.';
+  }
+  if (error?.code === 'ECONNABORTED') {
+    return 'The server is taking longer than usual to respond. Please try again.';
+  }
   const message =
     error?.response?.data?.message ||
     error?.response?.data?.error ||

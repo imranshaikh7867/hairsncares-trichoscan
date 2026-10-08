@@ -20,6 +20,8 @@ import {
   saveLeadThunk,
 } from '@/redux/slices/hairAssessmentSlice';
 import { useAuth } from '@/context/AuthContext';
+import { auth } from '@/lib/firebase';
+import { toApiErrorMessage } from '@/lib/axiosInstance';
 
 const normalizeText = (val) => String(val ?? '').trim().toLowerCase();
 const normalizeRuleId = (ruleId) => String(ruleId ?? '').trim().toUpperCase().replace(/_/g, '-');
@@ -1473,14 +1475,19 @@ const ProcessingView = ({ sessionId, onBack, onComplete }) => {
   const [progress, setProgress] = useState(2);
   const [activeStep, setActiveStep] = useState(0);
   const [status, setStatus] = useState('INIT');
+  // Set when the analysis fails or the API stops answering, so the screen can
+  // say so and offer a way back instead of spinning indefinitely.
+  const [pollError, setPollError] = useState('');
 
   useEffect(() => {
     let pollInterval;
+    let failures = 0;
 
     const checkStatus = async () => {
       try {
         const response = await dispatch(checkSessionStatusThunk(sessionId)).unwrap();
         if (response.success) {
+          failures = 0;
           const currentStatus = response.data.status;
           setStatus(currentStatus);
 
@@ -1488,17 +1495,36 @@ const ProcessingView = ({ sessionId, onBack, onComplete }) => {
           if (currentStatus === 'INIT' || currentStatus === 'REPORT_QUEUED' || currentStatus === 'UPLOADED') {
             setProgress(prev => Math.max(prev, 15));
           }
-          if (currentStatus === 'PROCESSING' || currentStatus === 'ANALYZING') {
+          if (currentStatus === 'ANALYSIS_IN_PROGRESS' || currentStatus === 'REPORT_IN_PROGRESS'
+            || currentStatus === 'PROCESSING' || currentStatus === 'ANALYZING') {
             setProgress(prev => Math.max(prev, 45));
           }
-          if (currentStatus === 'ANALYSIS_COMPLETE' || currentStatus === 'COMPLETED') {
+          // The pipeline finishes at ANALYSIS_COMPLETE; REPORT_COMPLETE is the
+          // state a re-run leaves behind, and both mean the report is ready.
+          if (['ANALYSIS_COMPLETE', 'REPORT_COMPLETE', 'COMPLETED'].includes(currentStatus)) {
             setProgress(100);
             clearInterval(pollInterval);
             setTimeout(() => onComplete(), 1500);
           }
+          // The pipeline can fail. Without this the bar simply stops near the
+          // end and polls for ever, which is indistinguishable from a hang.
+          if (currentStatus === 'ERROR') {
+            clearInterval(pollInterval);
+            setPollError('We could not finish your analysis. Please try again.');
+            toast.error('We could not finish your analysis. Please try again.');
+          }
         }
       } catch (error) {
         console.error("Status check failed:", error);
+        failures += 1;
+        // Stop after a run of failures rather than hammering an unreachable API
+        // behind a progress bar that will never move.
+        if (failures >= 4) {
+          clearInterval(pollInterval);
+          const msg = toApiErrorMessage(error);
+          setPollError(msg);
+          toast.error(msg);
+        }
       }
     };
 
@@ -1563,6 +1589,13 @@ const ProcessingView = ({ sessionId, onBack, onComplete }) => {
       </header>
 
       <main className="ai-content-main proc-content">
+        {pollError && (
+          <div className="proc-error-banner" role="alert">
+            <p>{pollError}</p>
+            <button type="button" onClick={() => window.location.reload()}>Try again</button>
+            <button type="button" className="secondary" onClick={onBack}>Go back</button>
+          </div>
+        )}
         <div className="ai-proc-hero-card">
           <div className="scan-animation-box">
             <img src="/aiphotoanalytics.png" alt="AI Scan" className="scan-base-img" />
@@ -1876,6 +1909,33 @@ const ResultsView = ({ sessionId, userProfile = {} }) => {
 
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+  /** Say what actually went wrong when phone verification will not start. */
+  const describePhoneAuthError = (err) => {
+    switch (err?.code) {
+      case 'auth/invalid-phone-number':
+        return 'That mobile number does not look right. Please check it and try again.';
+      case 'auth/too-many-requests':
+        return 'Too many attempts from this device. Please wait a few minutes and try again.';
+      case 'auth/quota-exceeded':
+        return 'Verification is temporarily unavailable. Please try again shortly.';
+      case 'auth/unauthorized-domain':
+      case 'auth/invalid-app-credential':
+        // The domain is not on the Firebase authorised list, so reCAPTCHA
+        // cannot issue a token. Nothing the user does will fix this.
+        return 'Verification is not available on this site yet. Please contact support.';
+      case 'auth/captcha-check-failed':
+        return 'The security check did not complete. Please try again.';
+      case 'auth/billing-not-enabled':
+        // Firebase phone auth is only available on the Blaze plan. Nothing the
+        // user can do — but it must not look like their phone number was wrong.
+        return 'Phone verification is temporarily unavailable. Please contact support so we can send your report.';
+      case 'auth/operation-not-allowed':
+        return 'Phone verification is not enabled for this site yet. Please contact support.';
+      default:
+        return toApiErrorMessage(err) || 'Could not start verification. Please try again.';
+    }
+  };
+
 
   const proceedAfterAuth = async () => {
     const resolvedName = userInfo.name.trim();
@@ -1883,8 +1943,12 @@ const ResultsView = ({ sessionId, userProfile = {} }) => {
     const resolvedEmail = email.trim();
 
     // 1. Create/fetch the Mongo user (backend keys on firebaseUid).
+    // Read the phone off the live Firebase user rather than the `firebaseUser`
+    // state: this runs immediately after the OTP is confirmed, and the state
+    // only catches up on the next render.
+    const signedInPhone = auth.currentUser?.phoneNumber || firebaseUser?.phoneNumber;
     await dispatch(authUserThunk({
-      phone: firebaseUser?.phoneNumber || `+91${resolvedPhone}`,
+      phone: signedInPhone || `+91${resolvedPhone}`,
       email: resolvedEmail || undefined,
       authProvider: 'phone',
     })).unwrap();
@@ -1952,7 +2016,7 @@ const ResultsView = ({ sessionId, userProfile = {} }) => {
       toast.info('OTP sent to your phone. Enter it to unlock your report.');
     } catch (err) {
       console.error('Unlock failed:', err);
-      toast.error('Could not start verification. Please try again.');
+      toast.error(describePhoneAuthError(err));
     } finally {
       setIsCreatingLead(false);
     }
@@ -1981,9 +2045,22 @@ const ResultsView = ({ sessionId, userProfile = {} }) => {
       setIsVerifyingOtp(true);
 
       // Confirm the 6-digit code → signs the user in to Firebase.
-      await confirmPhoneOtp(confirmationRef.current, code);
-      // Ensure the fresh token is ready for the gated result call.
-      await getIdToken(true);
+      // Only a failure in this part is actually a bad code; anything that goes
+      // wrong afterwards is a server problem and must not be reported as one.
+      try {
+        await confirmPhoneOtp(confirmationRef.current, code);
+        // Ensure the fresh token is ready for the gated result call.
+        await getIdToken(true);
+      } catch (otpError) {
+        console.error('OTP verification failed:', otpError);
+        const expired = otpError?.code === 'auth/code-expired';
+        const msg = expired
+          ? 'That code has expired. Please resend the OTP.'
+          : 'Invalid OTP. Please check the code and try again.';
+        setOtpError(msg);
+        toast.error(msg);
+        return;
+      }
 
       setIsOtpOpen(false);
       setIsGeneratingOpen(true);
@@ -1992,10 +2069,12 @@ const ResultsView = ({ sessionId, userProfile = {} }) => {
       await proceedAfterAuth();
       setIsGeneratingOpen(false);
     } catch (error) {
-      console.error('OTP verification failed:', error);
+      // Verified, but unlocking failed — a server or network problem. Say so,
+      // and leave the OTP modal closed: making them retype a correct code
+      // cannot help.
+      console.error('Unlock after verification failed:', error);
       setIsGeneratingOpen(false);
-      setOtpError('Invalid or expired OTP. Please try again.');
-      toast.error('Invalid or expired OTP. Please try again.');
+      toast.error(toApiErrorMessage(error));
     } finally {
       setIsVerifyingOtp(false);
     }
