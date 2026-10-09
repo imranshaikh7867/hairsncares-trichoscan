@@ -102,6 +102,33 @@ const getItems = (section) => {
   if (section && Array.isArray(section.items)) return section.items;
   return [];
 };
+
+/**
+ * The date this report was generated, as the API actually sends it.
+ *
+ * The API has no top-level `createdAt`: it sends `header.reportDate` already
+ * formatted, and `timestamp` as an ISO string. Reading `createdAt` always came
+ * back undefined, so every report printed the same hard-coded "Mar 31, 2026".
+ */
+const formatReportDate = (report) => {
+  const preformatted = report?.header?.reportDate;
+  if (typeof preformatted === "string" && preformatted.trim()) {
+    return preformatted.trim();
+  }
+  const raw =
+    report?.timestamp ??
+    report?.createdAt ??
+    report?.updatedAt ??
+    report?.generatedAt ??
+    null;
+  const when = raw ? new Date(raw) : null;
+  const valid = when && !Number.isNaN(when.getTime()) ? when : new Date();
+  return valid.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
 const asDisplayText = (value, fallback = "--") => {
   if (value == null || value === undefined) return fallback;
   if (typeof value === "string") return value.trim() || fallback;
@@ -887,6 +914,15 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
       variantSku: asDisplayText(r?.variantSku, ""),
       unitPrice: Number(r?.unitPrice) || 0,
       mrp: Number(r?.mrp) || 0,
+      // Context carried from the admin product mapping; each renders only when
+      // the mapped product supplies it.
+      brand: asDisplayText(r?.brand, ""),
+      actives: asDisplayList(r?.actives),
+      priority: asDisplayText(r?.priority, ""),
+      timeFrame: asDisplayText(r?.timeFrame, ""),
+      duration: asDisplayText(r?.duration, ""),
+      mrpLabel: asDisplayText(r?.mrpLabel, ""),
+      discountPct: Number(r?.discountPct) || 0,
       fromApi: true,
     };
   });
@@ -1299,14 +1335,18 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
   const treatmentRecommendationRows =
     treatmentRecommendationSource.length > 0
       ? treatmentRecommendationSource.map((r) => {
-        const priorityTone = asDisplayText(
-          r.priorityTone || r.tagTone || r.markerTone,
-          "medium"
-        ).toLowerCase();
-        const markerTone = asDisplayText(
+        // The stylesheet only defines these three tones; anything else leaves
+        // the marker dot and the priority pill unstyled (i.e. invisible).
+        const validEngineTones = ["high", "medium", "adjunct"];
+        const toEngineTone = (value, fallback = "medium") => {
+          const tone = asDisplayText(value, fallback).toLowerCase();
+          return validEngineTones.includes(tone) ? tone : fallback;
+        };
+        const priorityTone = toEngineTone(r.priorityTone || r.tagTone || r.markerTone);
+        const markerTone = toEngineTone(
           r.markerTone || r.priorityTone || r.tagTone,
           priorityTone
-        ).toLowerCase();
+        );
 
         return {
           title: asDisplayText(r.title || r.name || r.productName, "Treatment"),
@@ -1324,6 +1364,25 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
           ),
           showImage: toBooleanFlag(r.showImage, true),
           image: asDisplayText(r.image, ""),
+          // Context carried from the admin product mapping. Each one renders
+          // only when the mapped product actually supplies it, so rows that
+          // come from the built-in treatment library look exactly as before.
+          brand: asDisplayText(r.brand, ""),
+          actives: asDisplayList(r.actives),
+          benefits: asDisplayList(r.benefits),
+          usage: asDisplayText(r.usage, ""),
+          // Treatments the clinic attached to this product in the admin panel.
+          // Each carries the same four fields the product itself does.
+          treatments: safeArray(r.treatments)
+            .map((t) => ({
+              treatment: asDisplayText(t?.treatment, ""),
+              note: asDisplayText(t?.note, ""),
+              priority: asDisplayText(t?.priority, "MEDIUM"),
+              priorityTone: toEngineTone(t?.priorityTone || t?.markerTone),
+              timeFrame: asDisplayText(t?.timeFrame, ""),
+              duration: asDisplayText(t?.duration, ""),
+            }))
+            .filter((t) => t.treatment),
           fromApi: true,
         };
       })
@@ -1333,9 +1392,15 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
         priority: asDisplayText(r.priority, "MEDIUM"),
         priorityTone: asDisplayText(r.priorityTone, "medium").toLowerCase(),
         markerTone: asDisplayText(r.markerTone, "medium").toLowerCase(),
-        timeFrame: "1-3 mo",
-        duration: asDisplayText(r.purpose, "Ongoing"),
+        timeFrame: asDisplayText(r.timeFrame, "1-3 mo"),
+        duration: asDisplayText(r.duration || r.purpose, "Ongoing"),
         showImage: true,
+        image: asDisplayText(r.image, ""),
+        brand: asDisplayText(r.brand, ""),
+        actives: asDisplayList(r.actives),
+        benefits: [],
+        usage: "",
+        treatments: [],
         fromApi: true,
       }));
 
@@ -1653,7 +1718,9 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
               </svg>
               <span>Back</span>
             </button>
-            <img src="/logo.webp" alt="HairSnCare" className="report-logo-img" />
+            {/* The light-background logo disappears on the dark header; this is
+                the same mark drawn for dark surfaces. */}
+            <img src="/reportlogo.png" alt="HairSnCare" className="report-logo-img" />
           </div>
 
           <div className="header-center-group">
@@ -1696,7 +1763,7 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
                 <line x1="8" y1="2" x2="8" y2="6"></line>
                 <line x1="3" y1="10" x2="21" y2="10"></line>
               </svg>
-              Generated: {reportData?.createdAt ? new Date(reportData.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "Mar 31, 2026"}
+              Generated: {formatReportDate(reportData)}
             </span>
           </div>
           <div className="meta-right-group">
@@ -1822,7 +1889,7 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
                       <line x1="8" y1="2" x2="8" y2="6"></line>
                       <line x1="3" y1="10" x2="21" y2="10"></line>
                     </svg>
-                    {reportData?.createdAt ? new Date(reportData.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "Mar 31, 2026"}
+                    {formatReportDate(reportData)}
                   </span>
                 </div>
               </div>
@@ -3538,7 +3605,19 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
                           />
                           {asDisplayText(item.title, "Treatment")}
                         </h4>
+                        {asDisplayText(item.brand, "") && (
+                          <p className="treatment-engine-brand">
+                            by {asDisplayText(item.brand, "")}
+                          </p>
+                        )}
                         <p>{asDisplayText(item.desc, "")}</p>
+                        {asDisplayList(item.actives).length > 0 && (
+                          <ul className="treatment-engine-actives" aria-label="Active compounds">
+                            {asDisplayList(item.actives).map((active) => (
+                              <li key={active}>{active}</li>
+                            ))}
+                          </ul>
+                        )}
                       </div>
 
                       <div className="treatment-engine-side">
@@ -3569,6 +3648,66 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
                         <h5>{asDisplayText(item.duration, "Ongoing")}</h5>
                       </div>
                     </div>
+
+                    {/* Treatments the clinic paired with this product. Renders
+                        only when the admin mapped some; a product with none
+                        looks exactly as it did before. */}
+                    {safeArray(item.treatments).length > 0 && (
+                      <div className="treatment-engine-treatments">
+                        <p className="treatment-engine-treatments-label">
+                          Treatments with this product
+                        </p>
+                        <ul>
+                          {safeArray(item.treatments).map((treatment, tIdx) => (
+                            <li key={`${treatment.treatment}-${tIdx}`}>
+                              <div className="treatment-engine-treatment-head">
+                                <span
+                                  className={`treatment-engine-dot treatment-engine-dot-${asDisplayText(treatment.priorityTone, "medium")}`}
+                                  aria-hidden="true"
+                                />
+                                <h5>{treatment.treatment}</h5>
+                                <span
+                                  className={`treatment-engine-treatment-priority treatment-engine-priority-${asDisplayText(treatment.priorityTone, "medium")}`}
+                                >
+                                  {asDisplayText(treatment.priority, "MEDIUM")}
+                                </span>
+                              </div>
+                              {treatment.note && <p>{treatment.note}</p>}
+                              {(treatment.timeFrame || treatment.duration) && (
+                                <div className="treatment-engine-treatment-meta">
+                                  {treatment.timeFrame && (
+                                    <span>
+                                      <b>Time frame</b> {treatment.timeFrame}
+                                    </span>
+                                  )}
+                                  {treatment.duration && (
+                                    <span>
+                                      <b>Duration</b> {treatment.duration}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {(asDisplayText(item.usage, "") ||
+                      asDisplayList(item.benefits).length > 0) && (
+                        <div className="treatment-engine-footnote">
+                          {asDisplayText(item.usage, "") && (
+                            <span className="treatment-engine-usage">
+                              How to use: {asDisplayText(item.usage, "")}
+                            </span>
+                          )}
+                          {asDisplayList(item.benefits).length > 0 && (
+                            <span className="treatment-engine-benefits">
+                              {asDisplayList(item.benefits).join(" · ")}
+                            </span>
+                          )}
+                        </div>
+                      )}
                   </article>
                 ))}
               </div>
@@ -3659,8 +3798,10 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
                           )}
                         </span>
                         <h4>
-                          {phaseItem.phase} - {phaseItem.monthRange}
-                          <span>{phaseItem.subtitle}</span>
+                          {[phaseItem.phase, phaseItem.monthRange]
+                            .filter(Boolean)
+                            .join(" - ")}
+                          {phaseItem.subtitle && <span>{phaseItem.subtitle}</span>}
                         </h4>
                       </div>
 
@@ -5609,7 +5750,12 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
                       </svg>
                     </span>
                     <span>
-                      AI matched <b>{recommendationRows.length} products</b> to your {asDisplayText(reportData?.hhiStatus, "condition")} profile
+                      AI matched{" "}
+                      <b>
+                        {recommendationRows.length}{" "}
+                        {recommendationRows.length === 1 ? "product" : "products"}
+                      </b>{" "}
+                      to your {asDisplayText(reportData?.hhiStatus, "condition")} profile
                     </span>
                   </div>
 
@@ -5625,17 +5771,49 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
                           <span className={`product-tag ${row.tagTone}`}>
                             {row.tag}
                           </span>
+                          {(asDisplayText(row.brand, "") ||
+                            asDisplayText(row.variantLabel, "")) && (
+                              <p className="product-brand-line">
+                                {[asDisplayText(row.brand, ""), asDisplayText(row.variantLabel, "")]
+                                  .filter(Boolean)
+                                  .join(" · ")}
+                              </p>
+                            )}
                           <p>{row.desc}</p>
+                          {asDisplayList(row.actives).length > 0 && (
+                            <ul className="product-actives" aria-label="Key actives">
+                              {asDisplayList(row.actives).map((active) => (
+                                <li key={active}>{active}</li>
+                              ))}
+                            </ul>
+                          )}
                           <div className="product-bottom-row">
                             <span className={row.purposeTone}>{row.purpose}</span>
-                            <strong>{row.price}</strong>
+                            <span className="product-price-stack">
+                              {asDisplayText(row.mrpLabel, "") && (
+                                <s className="product-mrp">{asDisplayText(row.mrpLabel, "")}</s>
+                              )}
+                              <strong>{row.price}</strong>
+                            </span>
                           </div>
+                          {Number(row.discountPct) > 0 && (
+                            <span className="product-save-badge">
+                              Save {Number(row.discountPct)}%
+                            </span>
+                          )}
                         </div>
 
+                        {/* Was a dead button. Mapped products are purchasable,
+                            so it now opens the same kit checkout as the CTA
+                            below; for a product with no variant/price it is
+                            hidden rather than left inert. */}
                         <button
                           type="button"
                           className="go-btn"
-                          aria-label="View product"
+                          aria-label={`Add ${row.title} to your treatment kit`}
+                          title="Add to your treatment kit"
+                          onClick={handleAddRecommendedKit}
+                          hidden={!(row.productId && row.variantId && Number(row.unitPrice) > 0)}
                         >
                           <svg
                             width="15"

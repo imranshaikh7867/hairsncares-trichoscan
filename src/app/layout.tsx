@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Roboto } from "next/font/google";
 import "./globals.css";
 import ReduxProvider from "@/redux/providers";
 import { AuthProvider } from "@/context/AuthContext";
@@ -17,6 +17,18 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+/*
+  The TrichoScan report stylesheet asks for Roboto on roughly 260 rules, but the
+  font was never loaded and `body` had no font-family of its own — so every
+  element the stylesheet did not name explicitly (the header's Back link, the
+  report-id and date chips) rendered in the browser's default serif next to
+  Roboto body copy. That is the header "theme mismatch".
+*/
+const roboto = Roboto({
+  variable: "--font-roboto",
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
   title: "Hair Loss Test Online | Free Hair Diagnosis Test",
 };
@@ -29,7 +41,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${roboto.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <AuthProvider>

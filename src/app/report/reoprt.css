@@ -164,28 +164,29 @@ vertical-align: middle;
 color: #7A9BBB;
 
 }
+/* The header sits directly above the report, which is dark (#041126 → #020617),
+   so it is dark too. It used to be forced to a cream #f2f0ec, which left a light
+   bar across the top of an otherwise dark page and printed the same way. */
 .report-main-header {
-   background: #f2f0ec !important;
-
-   border-bottom: 1px solid rgba(4, 17, 38, 0.1);
+   background: #041126;
+   border-bottom: 1px solid rgba(0, 229, 255, 0.16);
    padding-top: 14px;
    padding-bottom: 0;
-   color: #041126;
+   color: var(--report-white, #e8f3ff);
 }
 
-/* Dark text/icons for the light (#f2f0ec) header background */
 .report-main-header .back-link-btn,
 .report-main-header .meta-date-chip,
 .report-main-header .report-id-chip {
-   color: #475569;
+   color: #9fb6cd;
 }
 
 .report-main-header .back-link-btn:hover {
-   color: #0a3d4a;
+   color: #00e5ff;
 }
 
 .report-main-header .header-bottom-meta {
-   border-top: 1px solid rgba(4, 17, 38, 0.08);
+   border-top: 1px solid rgba(0, 229, 255, 0.1);
 }
 
 .header-top-row {
@@ -1474,9 +1475,14 @@ color: #7A9BBB;
    height: 92px;
    border-radius: 50%;
    border: 2px solid #00d9ff;
-   background-image: url("/report-image/doctorimage.jpg");
-   background-size: cover;
-   background-position: center;
+   background-image: url("/dr_amit.jpeg");
+   /* The source is a 16:9 clinic photo, so `cover` would centre the frame on
+      the desk and leave the face small and off to one side. Zooming to ~197%
+      of the frame height and holding at 38%/7% crops to a head-and-shoulders
+      portrait. Both values are percentages, so the 60px mobile size below
+      lands on the same crop. */
+   background-size: auto 197%;
+   background-position: 38% 7%;
    background-repeat: no-repeat;
 }
 
@@ -4691,6 +4697,11 @@ color: #7A9BBB;
 }
 
 .treatment-engine-meta-card-duration h5 {
+   /* The duration box uses `-nobg`, not `-meta-card`, so it never picked up the
+      `.treatment-engine-meta-card h5` font and fell back to the UA serif —
+      a Times New Roman value sitting next to a Roboto one. */
+   margin: 8px 0 0;
+   font-family: Roboto, sans-serif;
    font-size: 12px;
    font-weight: 500;
    line-height: 19.5px;
@@ -12573,14 +12584,29 @@ linear-gradient(180deg, rgba(2, 11, 31, 0.92) 0%, rgba(2, 8, 24, 0.9) 100%); */
     background: #061626 !important;
   }
 
-  /* Hide interactive chrome that shouldn't be in the PDF.
-     Adjust these selectors to your actual button classes. */
+  /* Hide interactive chrome that shouldn't be in the PDF. Only the desktop
+     download button was listed, so the saved file still carried the mobile
+     download square, the Back link, the account menu, every "Unlock" call to
+     action and the floating widgets. */
   .download-report-btn,
+  .mobile-download-square-btn,
+  .back-link-btn,
+  .nav-user-icon, .nav-user-wrap,
+  .recovery-journey-download-btn,
+  .unlock-overlay-container, .unlock-cta-btn,
   .report-action-bar,
   .tco-overlay,
   .order-confirmed-card,
+  .Toastify, .Toastify__toast-container,
   header nav, .site-header, .site-footer {
     display: none !important;
+  }
+
+  /* Keep the header, but as a title block rather than a sticky bar. */
+  .report-main-header {
+    position: static !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
   /* Avoid awkward page breaks inside cards/sections */
@@ -12650,3 +12676,264 @@ linear-gradient(180deg, rgba(2, 11, 31, 0.92) 0%, rgba(2, 8, 24, 0.9) 100%); */
 .mock-reco { display: flex; gap: 10px; align-items: center; background: #0A2034; border: 1px solid rgba(0, 229, 255, 0.1); border-radius: 10px; padding: 10px; }
 .mock-thumb { width: 40px; height: 40px; border-radius: 8px; background: linear-gradient(135deg, #0C2C45, #123a59); flex-shrink: 0; }
 .mock-reco-body { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+/* =========================================================
+   REPORT BASE FONT
+   Everything in this stylesheet is drawn in Roboto, but the
+   font was never loaded and `body` sets no family, so any
+   element not named explicitly here (the header's Back link,
+   the report-id and date chips) fell back to the browser's
+   serif. `--font-roboto` is the self-hosted face from the
+   root layout; the rest of the stack covers it not loading.
+   Scoped to the report so no other screen is touched.
+   ========================================================= */
+.report-main-header,
+.test-report-page,
+.report-action-bar,
+.tco-overlay,
+.order-confirmed-card {
+   font-family: var(--font-roboto), Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Form controls do not inherit the font family, so the browser drew every
+   report button in its own 13px Arial — the "Back" link most visibly. */
+.report-main-header button,
+.report-action-bar button,
+.order-confirmed-card button,
+.test-report-page button,
+.test-report-page input,
+.test-report-page select,
+.test-report-page textarea,
+.tco-overlay button,
+.tco-overlay input,
+.tco-overlay select,
+.tco-overlay textarea {
+   font-family: inherit;
+}
+
+/* =========================================================
+   MAPPED-PRODUCT DETAIL  (admin panel → report)
+   Extra context the diagnosis-to-product mapping now carries:
+   brand, key actives, usage, benefits, MRP and the saving.
+   Every rule below is additive — a row that supplies none of
+   these fields renders exactly as it did before.
+   ========================================================= */
+
+/* --- Treatment Recommendation Engine card --- */
+.treatment-engine-brand {
+   margin: 4px 0 0 22px;
+   color: #00e5ff;
+   font-family: Roboto, sans-serif;
+   font-size: 10px;
+   font-weight: 700;
+   line-height: 14px;
+   letter-spacing: 0.6px;
+   text-transform: uppercase;
+}
+
+.treatment-engine-actives {
+   margin: 8px 0 0 22px;
+   padding: 0;
+   list-style: none;
+   display: flex;
+   flex-wrap: wrap;
+   gap: 6px;
+}
+
+.treatment-engine-actives li {
+   padding: 3px 8px;
+   border-radius: 9999px;
+   border: 1px solid rgba(0, 229, 255, 0.28);
+   background: rgba(0, 229, 255, 0.08);
+   color: #cfe9f7;
+   font-family: Roboto, sans-serif;
+   font-size: 10px;
+   font-weight: 600;
+   line-height: 14px;
+}
+
+.treatment-engine-footnote {
+   margin-top: 10px;
+   padding-top: 9px;
+   border-top: 1px dashed rgba(0, 229, 255, 0.18);
+   display: flex;
+   flex-wrap: wrap;
+   align-items: baseline;
+   gap: 4px 14px;
+   font-family: Roboto, sans-serif;
+   font-size: 10px;
+   line-height: 15px;
+}
+
+.treatment-engine-usage {
+   color: #f4c430;
+   font-weight: 600;
+}
+
+.treatment-engine-benefits {
+   color: #9fb4d0;
+   font-weight: 400;
+}
+
+/* --- Sidebar "Recommended for Your Hair Condition" card --- */
+.product-brand-line {
+   margin: 4px 0 0;
+   color: #74a4cc;
+   font-family: Roboto, sans-serif;
+   font-size: 9px;
+   font-weight: 700;
+   line-height: 13px;
+   letter-spacing: 0.5px;
+   text-transform: uppercase;
+}
+
+.product-actives {
+   margin: 6px 0 0;
+   padding: 0;
+   list-style: none;
+   display: flex;
+   flex-wrap: wrap;
+   gap: 4px;
+}
+
+.product-actives li {
+   padding: 2px 7px;
+   border-radius: 9999px;
+   border: 1px solid rgba(116, 164, 204, 0.3);
+   background: rgba(0, 229, 255, 0.07);
+   color: #cfe9f7;
+   font-family: Roboto, sans-serif;
+   font-size: 9px;
+   font-weight: 600;
+   line-height: 13px;
+}
+
+.product-price-stack {
+   display: inline-flex;
+   align-items: baseline;
+   gap: 5px;
+   white-space: nowrap;
+}
+
+.product-mrp {
+   color: #6b84a0;
+   font-family: Roboto, sans-serif;
+   font-size: 10px;
+   font-weight: 400;
+}
+
+.product-save-badge {
+   display: inline-block;
+   margin-top: 6px;
+   padding: 2px 7px;
+   border-radius: 6px;
+   border: 1px solid rgba(16, 185, 129, 0.35);
+   background: rgba(16, 185, 129, 0.12);
+   color: #10b981;
+   font-family: Roboto, sans-serif;
+   font-size: 9px;
+   font-weight: 700;
+   line-height: 13px;
+   letter-spacing: 0.4px;
+}
+
+/* `.go-btn` sets display:inline-flex, which beats the `hidden`
+   attribute on its own; this makes hiding it actually work. */
+.go-btn[hidden] {
+   display: none;
+}
+
+/* --- Treatments paired with a mapped product ---
+   Nested inside the Treatment Recommendation Engine card, below its meta grid.
+   Each row carries the same four fields the product does, plus its own name. */
+.treatment-engine-treatments {
+   margin-top: 12px;
+   padding: 11px 12px 12px;
+   border-radius: 12px;
+   border: 1px solid rgba(0, 229, 255, 0.16);
+   background: rgba(0, 229, 255, 0.04);
+}
+
+.treatment-engine-treatments-label {
+   margin: 0 0 9px;
+   color: #00e5ff;
+   font-family: Roboto, sans-serif;
+   font-size: 9px;
+   font-weight: 700;
+   line-height: 13.5px;
+   letter-spacing: 0.9px;
+   text-transform: uppercase;
+}
+
+.treatment-engine-treatments ul {
+   margin: 0;
+   padding: 0;
+   list-style: none;
+   display: grid;
+   gap: 9px;
+}
+
+.treatment-engine-treatments li {
+   padding: 9px 10px;
+   border-radius: 9px;
+   border: 1px solid rgba(0, 229, 255, 0.14);
+   background: #061a2e;
+   break-inside: avoid;
+   page-break-inside: avoid;
+}
+
+.treatment-engine-treatment-head {
+   display: flex;
+   align-items: center;
+   flex-wrap: wrap;
+   gap: 8px;
+}
+
+.treatment-engine-treatment-head h5 {
+   margin: 0;
+   flex: 1 1 auto;
+   min-width: 0;
+   color: #fff;
+   font-family: Roboto, sans-serif;
+   font-size: 12px;
+   font-weight: 700;
+   line-height: 17px;
+}
+
+.treatment-engine-treatment-priority {
+   flex: 0 0 auto;
+   padding: 2px 8px;
+   border-radius: 9999px;
+   font-family: Roboto, sans-serif;
+   font-size: 9px;
+   font-weight: 700;
+   line-height: 13px;
+   letter-spacing: 0.6px;
+}
+
+.treatment-engine-treatments li > p {
+   margin: 6px 0 0 20px;
+   color: #9fb4d0;
+   font-family: Roboto, sans-serif;
+   font-size: 11px;
+   font-weight: 400;
+   line-height: 17px;
+}
+
+.treatment-engine-treatment-meta {
+   margin: 7px 0 0 20px;
+   display: flex;
+   flex-wrap: wrap;
+   gap: 4px 16px;
+   font-family: Roboto, sans-serif;
+   font-size: 10px;
+   line-height: 15px;
+   color: #cfe9f7;
+}
+
+.treatment-engine-treatment-meta b {
+   color: #74a4cc;
+   font-weight: 700;
+   letter-spacing: 0.4px;
+   text-transform: uppercase;
+   margin-right: 5px;
+}
