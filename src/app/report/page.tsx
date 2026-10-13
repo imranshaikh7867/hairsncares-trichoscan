@@ -1327,6 +1327,29 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
   }));
 
 
+  /**
+   * Clinic treatments for the diagnosis (laser, PRP, micro-needling).
+   * They hang off the diagnosis rather than a product, so they render even
+   * when no products are mapped.
+   */
+  const validTreatmentTones = ["high", "medium", "adjunct"];
+  const treatmentRows = resolveItems(
+    lockedNarrative?.treatmentRows,
+    resolvedReport?.treatmentRows
+  )
+    .map((t) => {
+      const tone = asDisplayText(t?.priorityTone || t?.markerTone, "medium").toLowerCase();
+      return {
+        treatment: asDisplayText(t?.treatment || t?.name, ""),
+        note: asDisplayText(t?.note || t?.desc, ""),
+        priority: asDisplayText(t?.priority, "MEDIUM"),
+        priorityTone: validTreatmentTones.includes(tone) ? tone : "medium",
+        timeFrame: asDisplayText(t?.timeFrame, ""),
+        duration: asDisplayText(t?.duration, ""),
+      };
+    })
+    .filter((t) => t.treatment);
+
   const treatmentRecommendationSource = resolveItems(
     lockedNarrative?.treatmentRecommendationRows,
     resolvedReport?.treatmentRecommendationRows
@@ -1371,18 +1394,6 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
           actives: asDisplayList(r.actives),
           benefits: asDisplayList(r.benefits),
           usage: asDisplayText(r.usage, ""),
-          // Treatments the clinic attached to this product in the admin panel.
-          // Each carries the same four fields the product itself does.
-          treatments: safeArray(r.treatments)
-            .map((t) => ({
-              treatment: asDisplayText(t?.treatment, ""),
-              note: asDisplayText(t?.note, ""),
-              priority: asDisplayText(t?.priority, "MEDIUM"),
-              priorityTone: toEngineTone(t?.priorityTone || t?.markerTone),
-              timeFrame: asDisplayText(t?.timeFrame, ""),
-              duration: asDisplayText(t?.duration, ""),
-            }))
-            .filter((t) => t.treatment),
           fromApi: true,
         };
       })
@@ -1400,7 +1411,6 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
         actives: asDisplayList(r.actives),
         benefits: [],
         usage: "",
-        treatments: [],
         fromApi: true,
       }));
 
@@ -3593,6 +3603,50 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
                 </div>
               </div>
 
+              {/* Clinic treatments prescribed for the diagnosis. Mapped on the
+                  diagnosis rather than on a product, so this renders even when
+                  no products are linked. */}
+              {treatmentRows.length > 0 && (
+                <div className="treatment-engine-treatments">
+                  <p className="treatment-engine-treatments-label">
+                    Treatments for your diagnosis
+                  </p>
+                  <ul>
+                    {treatmentRows.map((treatment, tIdx) => (
+                      <li key={`${treatment.treatment}-${tIdx}`}>
+                        <div className="treatment-engine-treatment-head">
+                          <span
+                            className={`treatment-engine-dot treatment-engine-dot-${treatment.priorityTone}`}
+                            aria-hidden="true"
+                          />
+                          <h5>{treatment.treatment}</h5>
+                          <span
+                            className={`treatment-engine-treatment-priority treatment-engine-priority-${treatment.priorityTone}`}
+                          >
+                            {treatment.priority}
+                          </span>
+                        </div>
+                        {treatment.note && <p>{treatment.note}</p>}
+                        {(treatment.timeFrame || treatment.duration) && (
+                          <div className="treatment-engine-treatment-meta">
+                            {treatment.timeFrame && (
+                              <span>
+                                <b>Time frame</b> {treatment.timeFrame}
+                              </span>
+                            )}
+                            {treatment.duration && (
+                              <span>
+                                <b>Duration</b> {treatment.duration}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               <div className="treatment-engine-list">
                 {treatmentRecommendationRows.map((item, itemIndex) => (
                   <article className="treatment-engine-card" key={`${asDisplayText(item.title, "Treatment")}-${asDisplayText(item.timeFrame, "1-3 mo")}`}>
@@ -3648,50 +3702,6 @@ export default function TestReport({ sessionId, reportData: initialData, onDownl
                         <h5>{asDisplayText(item.duration, "Ongoing")}</h5>
                       </div>
                     </div>
-
-                    {/* Treatments the clinic paired with this product. Renders
-                        only when the admin mapped some; a product with none
-                        looks exactly as it did before. */}
-                    {safeArray(item.treatments).length > 0 && (
-                      <div className="treatment-engine-treatments">
-                        <p className="treatment-engine-treatments-label">
-                          Treatments with this product
-                        </p>
-                        <ul>
-                          {safeArray(item.treatments).map((treatment, tIdx) => (
-                            <li key={`${treatment.treatment}-${tIdx}`}>
-                              <div className="treatment-engine-treatment-head">
-                                <span
-                                  className={`treatment-engine-dot treatment-engine-dot-${asDisplayText(treatment.priorityTone, "medium")}`}
-                                  aria-hidden="true"
-                                />
-                                <h5>{treatment.treatment}</h5>
-                                <span
-                                  className={`treatment-engine-treatment-priority treatment-engine-priority-${asDisplayText(treatment.priorityTone, "medium")}`}
-                                >
-                                  {asDisplayText(treatment.priority, "MEDIUM")}
-                                </span>
-                              </div>
-                              {treatment.note && <p>{treatment.note}</p>}
-                              {(treatment.timeFrame || treatment.duration) && (
-                                <div className="treatment-engine-treatment-meta">
-                                  {treatment.timeFrame && (
-                                    <span>
-                                      <b>Time frame</b> {treatment.timeFrame}
-                                    </span>
-                                  )}
-                                  {treatment.duration && (
-                                    <span>
-                                      <b>Duration</b> {treatment.duration}
-                                    </span>
-                                  )}
-                                </div>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
 
                     {(asDisplayText(item.usage, "") ||
                       asDisplayList(item.benefits).length > 0) && (
